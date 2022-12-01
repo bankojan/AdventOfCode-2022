@@ -12,7 +12,7 @@ void CalculatePart1(string input)
         .Select(group => group.Sum())
         .Max();
 
-    Console.WriteLine($"Part 1: {max}");
+    Console.WriteLine($"Part 1 solution: {max}");
 }
 
 void CalculatePart2(string input)
@@ -26,5 +26,5 @@ void CalculatePart2(string input)
         .Take(3)
         .Sum();
 
-    Console.WriteLine($"Part 2: {sum}");
+    Console.WriteLine($"Part 2 solution: {sum}");
 }
