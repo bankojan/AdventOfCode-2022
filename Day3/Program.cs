@@ -1,7 +1,28 @@
 ﻿var lines = File.ReadAllLines(".\\Input.txt");
 
 SolvePart1(lines);
+SolvePart1Linq(lines);
 SolvePart2(lines);
+SolvePart2Linq(lines);
+
+void SolvePart1Linq(string[] lines)
+{
+    var sum = lines
+        .Select(line => ToNumber(line[..(line.Length / 2)].Intersect(line[^(line.Length / 2)..]).FirstOrDefault()))
+        .Sum();
+
+    Console.WriteLine($"Part 1 solution: {sum}");
+}
+
+void SolvePart2Linq(string[] lines)
+{
+    var sum = lines
+        .Chunk(3)
+        .Select(group => ToNumber(group[0].Intersect(group[1]).Intersect(group[2]).FirstOrDefault()))
+        .Sum();
+
+    Console.WriteLine($"Part 2 solution: {sum}");
+}
 
 void SolvePart1(string[] lines)
 {
