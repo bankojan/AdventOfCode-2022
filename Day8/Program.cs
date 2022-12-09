@@ -8,7 +8,7 @@ SolvePart2(grid);
 
 void SolvePart1(List<List<int>> grid)
 {
-    var visibleTrees = grid.Count * 2 + (grid[0].Count() - 2) * 2; 
+    var visibleTrees = grid.Count * 2 + (grid[0].Count() - 2) * 2;
 
     for (int i = 1; i < grid.Count - 1; i++)
     {
