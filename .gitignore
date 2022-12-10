@@ -349,4 +349,14 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 
-*Input*.txt
+/*/Input.txt
+/Day9/Input.txt
+/Day8/Input.txt
+/Day7/TestInput.txt
+/Day7/Input.txt
+/Day6/Input.txt
+/Day5/Input.txt
+/Day4/Input.txt
+/Day3/Input.txt
+/Day2/Input.txt
+/Day1/Input1.txt
