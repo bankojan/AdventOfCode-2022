@@ -51,6 +51,8 @@ void SolvePart1(string[] lines)
     Console.WriteLine($"Part 1 solution: {result}");
 }
 
+// 422147
+
 void SolvePart2(string[] lines)
 {
     var valves = ParseLines(lines);
@@ -111,11 +113,12 @@ int FindPathWithHelp(Valve current, Valve elephant, int minute, HashSet<Valve> o
     }
 
     var k1 = $"{string.Join(',', openValves.Select(v => v.Name).OrderBy(n => n))}";
-    var k2 = current.Name;
-    var k22 = elephant.Name;
+
+    var names = new List<string> { current.Name, elephant.Name };
+    var k2 = string.Join(",", names.OrderBy(n => n));
     var k3 = $"{minute}";
 
-    var dictKey = $"{k1}-{k2}-{k22}-{k3}";
+    var dictKey = $"{k1}-{k2}-{k3}";
 
     if (subSolutions.TryGetValue(dictKey, out int value))
     {
@@ -141,10 +144,10 @@ int FindPathWithHelp(Valve current, Valve elephant, int minute, HashSet<Valve> o
     {
         foreach (var valveElephant in possibleValvesElephant)
         {
-            if (valveCurrent.Equals(valveElephant))
-            {
-                continue;
-            }
+            //if (valveCurrent.Equals(valveElephant))
+            //{
+            //    continue;
+            //}
 
             var openValvesNew = new HashSet<Valve>(openValves);
             if (valveCurrent.Equals(current))
