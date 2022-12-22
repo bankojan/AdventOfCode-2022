@@ -1,6 +1,8 @@
-﻿var lines = File.ReadAllLines(".\\Input.txt");
+﻿using System.Collections.Generic;
 
-//SolvePart1(lines);
+var lines = File.ReadAllLines(".\\Input.txt");
+
+SolvePart1(lines);
 SolvePart2(lines);
 
 void SolvePart1(string[] lines)
@@ -28,20 +30,110 @@ void SolvePart1(string[] lines)
 void SolvePart2(string[] lines)
 {
     var monkeys = lines
-        .Select(l => Monkey.FromLine(l, true))
+        .Select(l => Monkey.FromLine(l))
         .ToList();
 
     var values = monkeys
-        .Where(m => m.Value != 0 || m.Name == "humn")
+        .Where(m => m.Value != 0)
         .ToDictionary(m => m.Name, m => m.Value);
 
-    var toEvaluate = monkeys
-		.Where(m => m.Value == 0 && m.Name != "humn")
-		.ToList();
+    var root = monkeys.First(m => m.Name == "root");
+	var leftMonkey = monkeys.First(m => m.Name == root.First);
+	var rightMonkey = monkeys.First(m => m.Name == root.Second);
+
+    var left = ContainsHuman(leftMonkey, monkeys);
+    var right = ContainsHuman(rightMonkey, monkeys);
+
+	long leftValue = 0;
+
+	if (!left)
+	{
+		leftValue = Evaluate(leftMonkey, values, monkeys);
+
+		values.TryAdd(rightMonkey.Name, leftValue);
+	}
+	else
+	{
+		leftValue = Evaluate(rightMonkey, values, monkeys);
+
+        values.TryAdd(leftMonkey.Name, leftValue);
+    }
+
+	foreach (var monkey in monkeys.Where(m => m.Name != "humn").ToList())
+	{
+		if(!ContainsHuman(monkey, monkeys))
+		{
+			Evaluate(monkey, values, monkeys);
+		}
+	}
 
 	var human = monkeys.First(m => m.Name == "humn");
+
+	var humanValue = ReverseEvaluate(human, values, monkeys);
+
+	Console.WriteLine($"Part 2 solution: {humanValue}");
 }
 
+long ReverseEvaluate(Monkey monkey, Dictionary<string, long> values, List<Monkey> monkeys)
+{
+    if (monkey.Name != "humn"&& values.TryGetValue(monkey.Name, out var val))
+    {
+        return val;
+    }
+
+	var parent = monkeys
+		.First(m => m.First == monkey.Name || m.Second == monkey.Name);
+
+	long firstVal;
+	bool reverse = false;
+
+	if(parent.First == monkey.Name)
+	{
+        if (!values.TryGetValue(parent.Second, out firstVal))
+        {
+            var firstMonkey = monkeys.First(m => m.Name == parent.Second);
+            firstVal = Evaluate(firstMonkey, values, monkeys);
+
+            values.TryAdd(parent.Second, firstVal);
+        }
+    }
+	else
+	{
+        if (!values.TryGetValue(parent.First, out firstVal))
+        {
+            var firstMonkey = monkeys.First(m => m.Name == parent.First);
+            firstVal = Evaluate(firstMonkey, values, monkeys);
+
+            values.TryAdd(parent.First, firstVal);
+        }
+        reverse = true;
+    }
+
+    if (!values.TryGetValue(parent.Name, out var secondVal))
+	{
+		secondVal = ReverseEvaluate(parent, values, monkeys);
+	}
+
+    var monkeyValue = parent.ReverseOperation((secondVal, firstVal, reverse));
+    values.TryAdd(monkey.Name, monkeyValue);
+
+    return monkeyValue;
+}
+
+bool ContainsHuman(Monkey monkey, List<Monkey> monkeys)
+{
+	if(monkey.Name == "humn")
+	{
+		return true;
+	}
+	if(monkey.Value != 0)
+	{
+		return false;
+	}	
+
+	return ContainsHuman(monkeys.First(m => m.Name == monkey.First), monkeys) ||
+		ContainsHuman(monkeys.First(m => m.Name == monkey.Second), monkeys);
+}
 
 long Evaluate(Monkey monkey, Dictionary<string, long> values, List<Monkey> monkeys)
 {
@@ -66,18 +158,15 @@ long Evaluate(Monkey monkey, Dictionary<string, long> values, List<Monkey> monke
         values.TryAdd(monkey.Second, secondVal);
     }
      
-	monkeys.Remove(monkey);
-
 	var monkeyValue = monkey.Operation((firstVal, secondVal));
 	values.TryAdd(monkey.Name, monkeyValue);
 
     return monkeyValue;
 }
 
-
-record struct Monkey(string Name, long Value, string First, string Second, Func<(long, long), long> Operation)
+record struct Monkey(string Name, long Value, string First, string Second, Func<(long, long), long> Operation, Func<(long, long, bool), long> ReverseOperation)
 {
-	public static Monkey FromLine(string line, bool part2 = false)
+	public static Monkey FromLine(string line)
 	{
 		var split = line.Split(":");
 		var rightSplit = split[1].Split(" ");
@@ -88,14 +177,14 @@ record struct Monkey(string Name, long Value, string First, string Second, Func<
 		string first = "", second = "";
 
 		Func<(long, long), long> operation = (_) => 0;
+        Func<(long, long, bool), long> reverseOperation = (_) => 0;
 
-		if (rightSplit.Length == 2)
+        if (rightSplit.Length == 2)
 		{
-			Value = (name == "humn" && part2) ? 0 : long.Parse(rightSplit[1]);
+			Value = long.Parse(rightSplit[1]);
 		}
 		else
 		{
-
 			first = rightSplit[1];
 			second = rightSplit[3];
 
@@ -109,8 +198,21 @@ record struct Monkey(string Name, long Value, string First, string Second, Func<
                     _ => 0
 				};
 			};
-		}
+            reverseOperation = ((long first, long second, bool reverse) input) =>
+            {
+                return (rightSplit[2].Trim(), input.reverse) switch
+                {
+                    ("+", _) => input.first - input.second,
+                    ("-", false) => input.first + input.second,
+                    ("-", true) => input.second - input.first,
+                    ("/", false) => input.first * input.second,
+                    ("/", true) => input.second / input.first,
+                    ("*", _) => input.first / input.second,
+                    _ => 0
+                };
+            };
+        }
 
-		return new(name, Value, first, second, operation);
+		return new(name, Value, first, second, operation, reverseOperation);
 	}
 }
